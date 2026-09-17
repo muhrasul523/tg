@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Masjid Cerdas</title>
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --bg-main: #f8f9fa; --text-main: #212529; --accent-1: #0d6efd;
+            --card-bg: #ffffff; --card-border: rgba(0,0,0,0.1);
+        }
+        body[data-theme="Deep Emerald Night"] {
+            --bg-main: #013220; --text-main: #fdf6e3; --accent-1: #d4af37;
+            --card-bg: rgba(255, 255, 255, 0.05); --card-border: rgba(212, 175, 55, 0.3);
+        }
+        body[data-theme="Royal Midnight Blue"] {
+            --bg-main: #001f3f; --text-main: #e0e0e0; --accent-1: #0074D9;
+            --card-bg: rgba(255, 255, 255, 0.05); --card-border: rgba(255, 255, 255, 0.1);
+        }
+        body[data-theme="Golden Sand Canvas"] {
+            --bg-main: #E1C699; --text-main: #4a3b2c; --accent-1: #8B5A2B;
+            --card-bg: rgba(255, 255, 255, 0.5); --card-border: rgba(139, 90, 43, 0.2);
+        }
+        body[data-theme="Liquid Caligraphy"] {
+            --bg-main: #0f4c5c; --text-main: #fb8500; --accent-1: #ffb703;
+            --card-bg: rgba(0, 0, 0, 0.2); --card-border: rgba(255, 183, 3, 0.3);
+        }
+
+        body {
+            background-color: var(--bg-main); color: var(--text-main);
+            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+            margin: 0; padding: 0; overflow: hidden; /* TV WAJIB HIDDEN */
+            transition: all 0.5s ease;
+        }
+
+        #public-view {
+            height: 100vh; width: 100vw; display: flex; flex-direction: column;
+        }
+
+        /* Header: Fixed Height (15vh) */
+        .header-section {
+            height: 15vh; padding: 0 2vw; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px solid var(--accent-1); box-sizing: border-box;
+        }
+        .header-title { font-size: 2.5vw; font-weight: 900; margin:0; line-height: 1.2; }
+        .header-subtitle { font-size: 1.2vw; margin:0; opacity:0.8; }
+        .header-clock { font-size: 4vw; font-weight: bold; margin:0; line-height:1; }
+        .header-date { font-size: 1.2vw; margin:0; text-align: right;}
+
+        /* Main Content: Flex 1 (Tengah TV, sekitar 77vh) */
+        .main-content {
+            flex: 1; display: flex; padding: 2vh 2vw; gap: 2vw; overflow: hidden; box-sizing: border-box;
+        }
+
+        /* Panels Kiri Kanan (Jadwal) */
+        .prayers-panel {
+            width: 25%; display: flex; flex-direction: column; justify-content: space-between; gap: 1vh;
+        }
+        .prayer-card {
+            background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 1vw;
+            padding: 1.5vh 1.5vw; display: flex; justify-content: space-between; align-items: center;
+            font-size: 2vw; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.2); flex: 1;
+        }
+        .prayer-card.active { background: var(--accent-1); color: var(--bg-main); transform: scale(1.02); transition: 0.3s; }
+
+        /* Panel Slide Tengah */
+        .slide-panel {
+            width: 50%; background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 1.5vw;
+            padding: 2vw; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; position: relative;
+        }
+        .slide-title { font-size: 2.5vw; font-weight: 800; color: var(--accent-1); margin-bottom: 2vh; width: 100%; }
+        .slide-content-text { font-size: 1.8vw; line-height: 1.5; width: 100%; white-space: pre-line; }
+        .slide-content-img { max-width: 100%; max-height: 50vh; object-fit: contain; border-radius: 1vw; }
+        
+        .fade-transition { animation: fadeIn 1s; }
+        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+        /* Footer Marquee: Fixed Height (8vh) */
+        .footer-section {
+            height: 8vh; background: var(--accent-1); color: var(--bg-main);
+            display: flex; align-items: center; font-size: 2vw; font-weight: bold; overflow: hidden;
+        }
+        .marquee-content {
+            display: inline-block; white-space: nowrap; padding-left: 100vw; animation: marquee linear infinite;
+        }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+        #iqamah-view {
+            position: fixed; top:0; left:0; width:100vw; height:100vh; background: var(--bg-main);
+            z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .iqamah-timer { font-size: 18vw; font-weight: bold; color: var(--accent-1); line-height: 1; }
+        .iqamah-text { font-size: 3vw; margin-top: 1vh; }
+
+        #blank-view { position: fixed; top:0; left:0; width:100vw; height:100vh; background: #000; z-index: 2000; display: none; }
+
+        /* Admin Pro Sidebar Layout */
+        #admin-view {
+            display: none; height: 100vh; width: 100vw; background: #f0f2f5; color: #333; overflow: hidden;
+        }
+        .admin-wrapper { display: flex; height: 100%; }
+        .admin-sidebar {
+            width: 280px; background: #2c3e50; color: white; display: flex; flex-direction: column;
+        }
+        .admin-sidebar .brand { padding: 20px; font-size: 1.2rem; font-weight: bold; border-bottom: 1px solid #34495e; }
+        .admin-sidebar .nav-link { color: #bdc3c7; padding: 15px 20px; cursor: pointer; border-radius: 0; }
+        .admin-sidebar .nav-link:hover, .admin-sidebar .nav-link.active { background: #34495e; color: white; border-left: 4px solid #3498db; }
+        .admin-main { flex: 1; padding: 30px; overflow-y: auto; }
+        .admin-card { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction:column;
+            justify-content: center; align-items: center; color: white; font-size: 2rem; display: none;
+        }
+        #secret-login { cursor: pointer; opacity: 0.1; }
+    </style>
+</head>
+<body data-theme="Deep Emerald Night">
+
+    <!-- LOADING OVERLAY -->
+    <div id="loading">
+        <div class="spinner-border text-light mb-3" style="width: 4rem; height: 4rem;"></div>
+        <span>Mensinkronisasi Data...</span>
+    </div>
+
+    <div id="public-view">
+        <div class="header-section">
+            <div>
+                <h1 class="header-title">
+                    <!-- Tombol Rahasia Login Admin (Klik Icon) -->
+                    <i class="bi bi-mosque me-2" id="secret-login" onclick="showLoginModal()"></i> 
+                    MASJID ABU BAKAR ASH SHIDDIQ
+                </h1>
+                <h4 class="header-subtitle">Tarbiyah Garden, Kab. Gowa</h4>
+            </div>
+            <div>
+                <h1 id="clock" class="header-clock">00:00:00</h1>
+                <h4 id="date-text" class="header-date">Senin, 1 Januari 2026</h4>
+                <h4 id="hijri-text" class="header-date" style="color: var(--accent-1); font-weight:bold;">1 Muharram 1446 H</h4>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="prayers-panel" id="prayers-left"></div>
+            
+            <div class="slide-panel fade-transition" id="slide-container">
+                <div class="slide-title" id="slide-title">Info Masjid</div>
+                <div id="slide-content-area">
+                    <div class="slide-content-text">Memuat sistem informasi digital...</div>
+                </div>
+            </div>
+
+            <div class="prayers-panel" id="prayers-right"></div>
+        </div>
+
+        <div class="footer-section">
+            <div class="marquee-content" id="running-text">Loading...</div>
+        </div>
+    </div>
+
+    <div id="iqamah-view">
+        <div class="iqamah-text">WAKTU IQAMAH <span id="iqamah-prayer-name"></span></div>
+        <div class="iqamah-timer" id="iqamah-timer">00:00</div>
+        <div class="iqamah-text" style="font-size: 4vw;">Luruskan dan Rapatkan Shaf</div>
+    </div>
+
+    <div id="blank-view"></div>
+
+    <div id="admin-view">
+        <div class="admin-wrapper">
+            <!-- Sidebar -->
+            <div class="admin-sidebar">
+                <div class="brand"><i class="bi bi-gear-wide-connected"></i> Panel Admin</div>
+                <a class="nav-link active" onclick="switchAdminTab('tab-umum')"><i class="bi bi-palette me-2"></i> Konfigurasi Umum</a>
+                <a class="nav-link" onclick="switchAdminTab('tab-waktu')"><i class="bi bi-clock-history me-2"></i> Jadwal & Hijriah</a>
+                <a class="nav-link" onclick="switchAdminTab('tab-slide')"><i class="bi bi-easel me-2"></i> Pengumuman Layar</a>
+                <a class="nav-link" onclick="switchAdminTab('tab-keuangan')"><i class="bi bi-cash-coin me-2"></i> Laporan Keuangan</a>
+                <a class="nav-link" onclick="switchAdminTab('tab-qris')"><i class="bi bi-qr-code-scan me-2"></i> QRIS & Rekening</a>
+                <div style="flex-grow:1;"></div>
+                <a class="nav-link text-danger" onclick="closeAdmin()"><i class="bi bi-box-arrow-left me-2"></i> Tutup Admin (Ke TV)</a>
+            </div>
+
+            <!-- Main Content -->
+            <div class="admin-main">
+                
+                <!-- TAB: UMUM -->
+                <div id="tab-umum" class="admin-tab">
+                    <div class="admin-card">
+                        <h4>Konfigurasi Tema & Tampilan Dasar</h4>
+                        <hr>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tema Layar TV</label>
+                            <select class="form-select" id="inp-theme">
+                                <option value="The Clean Radiant">The Clean Radiant (Putih Bersih)</option>
+                                <option value="Deep Emerald Night">Deep Emerald Night (Hijau Gelap)</option>
+                                <option value="Royal Midnight Blue">Royal Midnight Blue (Biru Malam)</option>
+                                <option value="Golden Sand Canvas">Golden Sand Canvas (Pasir Hangat)</option>
+                                <option value="Liquid Caligraphy">Liquid Caligraphy (Teal Estetik)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Teks Berjalan (Footer)</label>
+                            <textarea class="form-control" id="inp-runningtext" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Kecepatan Teks Berjalan (detik)</label>
+                            <input type="number" class="form-control" id="inp-speed" min="5" max="100">
+                            <small class="text-muted">Makin kecil makin cepat (standar: 15-25)</small>
+                        </div>
+                        
+                        <h5 class="mt-4 fw-bold">Visibilitas Fitur Utama</h5>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="inp-showfinance">
+                            <label class="form-check-label">Tampilkan Laporan Keuangan di rotasi layar</label>
+                        </div>
+                        <div class="form-check form-switch mb-4">
+                            <input class="form-check-input" type="checkbox" id="inp-showqris">
+                            <label class="form-check-label">Tampilkan QRIS & Rekening di rotasi layar</label>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="saveConfig()"><i class="bi bi-save"></i> Simpan Konfigurasi</button>
+                    </div>
+                </div>
+
+                <!-- TAB: WAKTU -->
+                <div id="tab-waktu" class="admin-tab" style="display:none;">
+                    <div class="row">
+                        <!-- Hijriah -->
+                        <div class="col-md-6">
+                            <div class="admin-card">
+                                <h4>Pengaturan Tanggal Hijriah</h4>
+                                <hr>
+                                <div class="alert alert-info py-2"><small>Setel hari ke-1 bulan berjalan. Sistem otomatis tambah hari dan berganti tanggal saat masuk jam Maghrib.</small></div>
+                                <div class="mb-2">
+                                    <label class="form-label">Nama Bulan Hijriah Saat Ini</label>
+                                    <input type="text" class="form-control" id="inp-hijrimonth" placeholder="Misal: Muharram">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Tahun Hijriah</label>
+                                    <input type="number" class="form-control" id="inp-hijriyear" placeholder="1446">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tanggal Masehi Untuk 1 Hijriah</label>
+                                    <input type="date" class="form-control" id="inp-hijristart">
+                                </div>
+                                <button class="btn btn-primary w-100" onclick="saveConfig()"><i class="bi bi-save"></i> Terapkan Hijriah</button>
+                            </div>
+                        </div>
+
+                        <!-- Jadwal Shalat -->
+                        <div class="col-md-6">
+                            <div class="admin-card">
+                                <h4>Jadwal Shalat (Manual)</h4>
+                                <hr>
+                                <table class="table table-sm">
+                                    <thead><tr><th>Waktu</th><th>Jam</th><th>Iqamah (Mnt)</th></tr></thead>
+                                    <tbody id="prayers-tbody"></tbody>
+                                </table>
+                                <small class="text-danger">*Waktu Duha hanya tampil, tidak memicu timer Iqamah.</small><br><br>
+                                <button class="btn btn-primary w-100" onclick="savePrayers()"><i class="bi bi-save"></i> Simpan Jadwal</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: SLIDES -->
+                <div id="tab-slide" class="admin-tab" style="display:none;">
+                    <div class="admin-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="m-0">Manajemen Pengumuman Layar</h4>
+                            <button class="btn btn-success" onclick="showSlideModal()"><i class="bi bi-plus-lg"></i> Tambah Slide</button>
+                        </div>
+                        <table class="table table-hover">
+                            <thead class="table-light"><tr><th>Status</th><th>Tipe</th><th>Judul</th><th>Durasi</th><th>Aksi</th></tr></thead>
+                            <tbody id="slides-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: KEUANGAN -->
+                <div id="tab-keuangan" class="admin-tab" style="display:none;">
+                    <div class="admin-card">
+                        <h4>Laporan Keuangan Kas Masjid</h4>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Saldo Bulan Lalu (Rp)</label>
+                                <input type="number" class="form-control" id="inp-saldoawal">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Total Pemasukan Bulan Ini (Rp)</label>
+                                <input type="number" class="form-control" id="inp-pemasukan">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Total Pengeluaran Bulan Ini (Rp)</label>
+                                <input type="number" class="form-control" id="inp-pengeluaran">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">SALDO AKHIR SAAT INI (Rp)</label>
+                                <input type="number" class="form-control bg-light" id="inp-saldoakhir" readonly>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary mb-3" onclick="hitungSaldo()">Hitung Saldo Akhir</button>
+                        <button class="btn btn-primary" onclick="saveFinance()"><i class="bi bi-save"></i> Simpan Laporan</button>
+                    </div>
+                </div>
+
+                <!-- TAB: QRIS -->
+                <div id="tab-qris" class="admin-tab" style="display:none;">
+                    <div class="admin-card">
+                        <h4>Identitas QRIS & Rekening Bank</h4>
+                        <hr>
+                        <div class="mb-3">
+                            <label class="form-label">Nama Bank</label>
+                            <input type="text" class="form-control" id="inp-bankname" placeholder="Misal: Bank Syariah Indonesia (BSI)">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nomor Rekening</label>
+                            <input type="text" class="form-control" id="inp-accnumber">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Atas Nama (A/N)</label>
+                            <input type="text" class="form-control" id="inp-accname">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">URL Gambar QRIS</label>
+                            <input type="url" class="form-control" id="inp-qrisurl" placeholder="https://domain.com/qris.jpg">
+                            <small class="text-muted">Masukkan link langsung (direct link) ke gambar QRIS yang valid.</small>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveIdentity()"><i class="bi bi-save"></i> Simpan Identitas</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Login -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Akses Admin</h5></div>
+                <div class="modal-body">
+                    <input type="password" id="admin-pin" class="form-control form-control-lg text-center" placeholder="PIN" autocomplete="off">
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="verifyLogin()">Login</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form Slide -->
+    <div class="modal fade" id="slideModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Kelola Slide</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="slide-id">
+                    <div class="mb-2">
+                        <label>Tipe Slide</label>
+                        <select class="form-select" id="slide-type">
+                            <option value="text">Teks Pengumuman</option>
+                            <option value="image">Gambar (Poster/Brosur)</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Judul Slide</label>
+                        <input type="text" class="form-control" id="slide-title-input" required>
+                    </div>
+                    <div class="mb-2" id="slide-content-wrapper">
+                        <label id="slide-content-label">Isi Teks / URL Gambar</label>
+                        <textarea class="form-control" id="slide-content-input" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label>Durasi (Detik)</label>
+                            <input type="number" class="form-control" id="slide-duration" value="10">
+                        </div>
+                        <div class="col-6">
+                            <label>Status Tampil</label>
+                            <select class="form-select" id="slide-active">
+                                <option value="true">Aktif</option>
+                                <option value="false">Sembunyikan</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-success w-100" onclick="saveSingleSlide()">Simpan Slide</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ==========================================
+        // KONFIGURASI URL API
+        // ==========================================
+        // GANTI STRING DI BAWAH INI DENGAN URL WEBAPP GOOGLE APPS SCRIPT ANDA
+        const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx6pvpfmR9Hlg_-d84zFgKUbvUqCYqVm-JQ0oEE5BKWyV1DL-wimuLyy-Rd4XdP99Ek/exec"; 
+
+        // ==========================================
+        // STATE MANAGEMENT
+        // ==========================================
+        let db = {
+            config: {}, prayers: [], announcements: [], finance: {}, identity: {}
+        };
+        
+        let slideIndex = 0;
+        let slideTimer;
+        let currentMode = 'normal'; // normal, iqamah, shalat
+        let targetTime = null;
+        let generatedCarousel = [];
+
+        // Dummy Data untuk Mode Simulasi (Local / Canvas)
+        const dummyData = {
+            config: {
+                theme: "Deep Emerald Night", runningText: "SIMULASI: Selamat datang di Masjid Abu Bakar Ash Shiddiq. Silakan atur URL WebApp.", runningTextSpeed: "15",
+                hijriMonth: "Dzulhijjah", hijriYear: "1445", hijriStartDate: "2024-06-08",
+                showFinance: "true", showQris: "true"
+            },
+            prayers: [
+                { name: "Subuh", time: "04:50", iqamah: 10 },
+                { name: "Duha", time: "06:30", iqamah: 0 },
+                { name: "Dzuhur", time: "12:15", iqamah: 10 },
+                { name: "Ashar", time: "15:30", iqamah: 10 },
+                { name: "Maghrib", time: "18:10", iqamah: 10 },
+                { name: "Isya", time: "19:25", iqamah: 10 }
+            ],
+            announcements: [
+                { id: "A1", type: "text", title: "Kajian Rutin", content: "Kajian Fiqih Sunnah setiap Ba'da Maghrib", duration: 10, isActive: "true" },
+                { id: "A2", type: "image", title: "Poster", content: "https://placehold.co/800x600/013220/fdf6e3?text=Gambar+Poster", duration: 8, isActive: "true" }
+            ],
+            finance: { saldoAwal: 10000000, pemasukan: 2000000, pengeluaran: 500000, saldoAkhir: 11500000, updated: new Date().toISOString() },
+            identity: { bankName: "BSI", accNumber: "1234567890", accName: "Masjid", qrisUrl: "https://placehold.co/400x400/ffffff/000000?text=QRIS" }
+        };
+
+        // ==========================================
+        // INISIALISASI & FETCH DATA
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", () => {
+            loadData();
+            setInterval(updateClock, 1000);
+            
+            // Auto fetch di background setiap 10 menit jika tidak sedang iqamah/shalat
+            setInterval(() => {
+                if(currentMode === 'normal') backgroundSync();
+            }, 600000); 
+        });
+
+        function showLoading() { document.getElementById('loading').style.display = 'flex'; }
+        function hideLoading() { document.getElementById('loading').style.display = 'none'; }
+
+        async function loadData() {
+            showLoading();
+            if (!WEBAPP_URL || WEBAPP_URL === "") {
+                console.log("SIMULATION MODE: URL Kosong");
+                db = JSON.parse(JSON.stringify(dummyData));
+                setTimeout(() => { renderSystem(); hideLoading(); }, 800);
+            } else {
+                try {
+                    const res = await fetch(WEBAPP_URL + "?api=true");
+                    const json = await res.json();
+                    if(json.status === 'success') {
+                        db = json.data;
+                        renderSystem();
+                    } else throw new Error("API Error");
+                } catch (e) {
+                    console.error("Gagal load API:", e);
+                    Swal.fire('Error', 'Gagal memuat data dari server. Memuat mode lokal.', 'warning');
+                    db = JSON.parse(JSON.stringify(dummyData));
+                    renderSystem();
+                }
+                hideLoading();
+            }
+        }
+
+        async function backgroundSync() {
+            if (!WEBAPP_URL) return;
+            try {
+                const res = await fetch(WEBAPP_URL + "?api=true");
+                const json = await res.json();
+                if(json.status === 'success') {
+                    db = json.data;
+                    applyConfig();
+                    renderPrayersToTV();
+                    buildCarouselArray();
+                }
+            } catch(e) {}
+        }
+
+        async function postData(action, payload) {
+            showLoading();
+            if(!WEBAPP_URL) {
+                // Simpan ke local object di mode simulasi
+                hideLoading();
+                Swal.fire('Tersimpan', 'Disimpan di memory simulasi.', 'success');
+                renderSystem();
+                return;
+            }
+            try {
+                await fetch(WEBAPP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' }, // Avoid CORS Preflight
+                    body: JSON.stringify({ action: action, payload: payload })
+                });
+                await loadData();
+                Swal.fire('Sukses', 'Data berhasil disimpan ke Spreadsheet', 'success');
+            } catch (e) {
+                hideLoading();
+                Swal.fire('Error', 'Gagal menyimpan data.', 'error');
+            }
+        }
+
+        // ==========================================
+        // RENDERING LOGIC (TV & ADMIN)
+        // ==========================================
+        function renderSystem() {
+            applyConfig();
+            renderPrayersToTV();
+            buildCarouselArray();
+            populateAdminForms();
+        }
+
+        function applyConfig() {
+            document.body.setAttribute('data-theme', db.config.theme);
+            const rt = document.getElementById('running-text');
+            rt.innerText = db.config.runningText;
+            rt.style.animationDuration = db.config.runningTextSpeed + 's';
+        }
+
+        function renderPrayersToTV() {
+            const lCon = document.getElementById('prayers-left');
+            const rCon = document.getElementById('prayers-right');
+            lCon.innerHTML = ''; rCon.innerHTML = '';
+            
+            db.prayers.forEach((p, idx) => {
+                const card = `<div class="prayer-card" id="card-${p.name}">
+                                <span>${p.name.toUpperCase()}</span><span>${p.time}</span>
+                              </div>`;
+                if(idx < 3) lCon.innerHTML += card;
+                else rCon.innerHTML += card;
+            });
+            highlightCurrentPrayer();
+        }
+
+        function buildCarouselArray() {
+            generatedCarousel = [];
+            
+            // 1. Tambah slide user yg aktif
+            db.announcements.forEach(a => {
+                if(a.isActive === 'true' || a.isActive === true) {
+                    generatedCarousel.push(a);
+                }
+            });
+
+            // 2. Tambah slide Finance jika aktif
+            if((db.config.showFinance === 'true' || db.config.showFinance === true) && db.finance.saldoAkhir) {
+                const finHtml = `
+                    <div style="width:100%; text-align:left; font-size: 1.8vw;">
+                        <table style="width:100%; border-collapse: separate; border-spacing: 0 1.5vh;">
+                            <tr><td>Saldo Bulan Lalu</td><td style="text-align:right">Rp ${parseInt(db.finance.saldoAwal).toLocaleString('id-ID')}</td></tr>
+                            <tr style="color: #198754;"><td>Pemasukan</td><td style="text-align:right">+ Rp ${parseInt(db.finance.pemasukan).toLocaleString('id-ID')}</td></tr>
+                            <tr style="color: #dc3545;"><td>Pengeluaran</td><td style="text-align:right">- Rp ${parseInt(db.finance.pengeluaran).toLocaleString('id-ID')}</td></tr>
+                            <tr><td colspan="2"><hr style="border-top:2px dashed currentColor;"></td></tr>
+                            <tr style="font-weight:900; font-size: 2.2vw;"><td>SALDO AKHIR</td><td style="text-align:right">Rp ${parseInt(db.finance.saldoAkhir).toLocaleString('id-ID')}</td></tr>
+                        </table>
+                    </div>
+                `;
+                generatedCarousel.push({ type: 'html', title: 'Laporan Keuangan Kas', content: finHtml, duration: 15 });
+            }
+
+            // 3. Tambah slide QRIS jika aktif
+            if((db.config.showQris === 'true' || db.config.showQris === true) && db.identity.qrisUrl) {
+                const qrisHtml = `
+                    <div style="display:flex; justify-content:center; align-items:center; gap:3vw; width:100%; height:100%;">
+                        <img src="${db.identity.qrisUrl}" style="max-height: 40vh; max-width: 40vw; border-radius:1vw; box-shadow:0 10px 20px rgba(0,0,0,0.2);">
+                        <div style="text-align:left; font-size: 1.8vw;">
+                            <div style="font-weight:bold; font-size: 2.5vw;">${db.identity.bankName}</div>
+                            <div style="font-size:3vw; font-family:monospace; margin: 1vh 0; font-weight:bold; letter-spacing: 2px;">${db.identity.accNumber}</div>
+                            <div>A/N: ${db.identity.accName}</div>
+                        </div>
+                    </div>
+                `;
+                generatedCarousel.push({ type: 'html', title: 'Salurkan Infaq Terbaik Anda', content: qrisHtml, duration: 15 });
+            }
+
+            startCarousel();
+        }
+
+        function startCarousel() {
+            clearTimeout(slideTimer);
+            if (generatedCarousel.length === 0) {
+                document.getElementById('slide-title').innerText = "Info Masjid";
+                document.getElementById('slide-content-area').innerHTML = '<div class="slide-content-text">Tampilan standby.</div>';
+                return;
+            }
+            slideIndex = 0;
+            showNextSlide();
+        }
+
+        function showNextSlide() {
+            if (slideIndex >= generatedCarousel.length) slideIndex = 0;
+            const slide = generatedCarousel[slideIndex];
+            
+            const container = document.getElementById('slide-container');
+            container.classList.remove('fade-transition');
+            void container.offsetWidth; // Reflow
+            
+            document.getElementById('slide-title').innerText = slide.title;
+            
+            const area = document.getElementById('slide-content-area');
+            if(slide.type === 'image') {
+                area.innerHTML = `<img src="${slide.content}" class="slide-content-img" onerror="this.src='https://placehold.co/800x600?text=Gambar+Gagal+Dimuat'">`;
+            } else if(slide.type === 'html') {
+                area.innerHTML = slide.content;
+            } else {
+                area.innerHTML = `<div class="slide-content-text">${slide.content}</div>`;
+            }
+
+            container.classList.add('fade-transition');
+            slideIndex++;
+            slideTimer = setTimeout(showNextSlide, (parseInt(slide.duration) || 10) * 1000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            
+            // 1. Waktu Masehi Standar
+            const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            document.getElementById('date-text').innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+            
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').innerText = `${h}:${m}:${s}`;
+
+            // 2. Perhitungan Hijriah Cerdas (Pindah saat Maghrib)
+            if(db.prayers.length > 0 && db.config.hijriStartDate) {
+                let maghrib = db.prayers.find(p => p.name.toLowerCase() === 'maghrib');
+                let isAfterMaghrib = false;
+                if(maghrib) {
+                    let [mH, mM] = maghrib.time.split(':').map(Number);
+                    let mDate = new Date(now); mDate.setHours(mH, mM, 0, 0);
+                    if(now >= mDate) isAfterMaghrib = true;
+                }
+
+                let startDate = new Date(db.config.hijriStartDate);
+                startDate.setHours(0,0,0,0);
+                let compDate = new Date(now);
+                compDate.setHours(0,0,0,0);
+                
+                let diffTime = Math.abs(compDate - startDate);
+                let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                let hDay = 1 + diffDays;
+                if(isAfterMaghrib) hDay += 1; // Besok Hijriahnya
+                
+                document.getElementById('hijri-text').innerText = `${hDay} ${db.config.hijriMonth} ${db.config.hijriYear} H`;
+            }
+
+            // 3. State Machine (Adzan, Iqamah, Shalat)
+            if (currentMode === 'normal') {
+                checkAdzan(h, m, s);
+                if(s==='00' || s==='30') highlightCurrentPrayer();
+            } else if (currentMode === 'iqamah') {
+                updateIqamahTimer(now);
+            } else if (currentMode === 'shalat') {
+                if (now >= targetTime) {
+                    currentMode = 'normal';
+                    document.getElementById('blank-view').style.display = 'none';
+                    document.getElementById('public-view').style.display = 'flex';
+                }
+            }
+        }
+
+        function highlightCurrentPrayer() {
+            const now = new Date();
+            const currMins = now.getHours() * 60 + now.getMinutes();
+            document.querySelectorAll('.prayer-card').forEach(c => c.classList.remove('active'));
+
+            let activeId = null;
+            for(let i=0; i<db.prayers.length; i++) {
+                let [ph, pm] = db.prayers[i].time.split(':').map(Number);
+                if(currMins < (ph*60 + pm)) { activeId = `card-${db.prayers[i].name}`; break; }
+            }
+            if(!activeId && db.prayers.length > 0) activeId = `card-${db.prayers[0].name}`;
+            
+            const card = document.getElementById(activeId);
+            if(card) card.classList.add('active');
+        }
+
+        function checkAdzan(h, m, s) {
+            const hm = `${h}:${m}`;
+            if (s === '00') {
+                const p = db.prayers.find(x => x.time === hm);
+                if (p) {
+                    if(p.name.toLowerCase() === 'duha' || p.name.toLowerCase() === 'dhuha') {
+                        // Tidak ada iqamah untuk Duha
+                        Swal.fire({ title: 'Waktu Duha', text: 'Telah masuk waktu Duha', icon: 'info', timer: 10000, showConfirmButton: false });
+                    } else {
+                        triggerAdzan(p);
+                    }
+                }
+            }
+        }
+
+        function triggerAdzan(prayer) {
+            Swal.fire({ title: 'WAKTU SHALAT', text: `Masuk waktu ${prayer.name}`, icon: 'info', timer: 10000, showConfirmButton: false });
+            setTimeout(() => { startIqamah(prayer); }, 10000);
+        }
+
+        function startIqamah(prayer) {
+            const dur = parseInt(prayer.iqamah) || 0;
+            if(dur <= 0) return; // Lewati jika 0
+
+            currentMode = 'iqamah';
+            targetTime = new Date();
+            targetTime.setMinutes(targetTime.getMinutes() + dur);
+            
+            document.getElementById('iqamah-prayer-name').innerText = prayer.name.toUpperCase();
+            document.getElementById('public-view').style.display = 'none';
+            document.getElementById('iqamah-view').style.display = 'flex';
+        }
+
+        function updateIqamahTimer(now) {
+            const diff = targetTime - now;
+            if (diff <= 0) {
+                currentMode = 'shalat';
+                targetTime = new Date();
+                targetTime.setMinutes(targetTime.getMinutes() + 10); // 10 menit layar mati saat shalat
+                document.getElementById('iqamah-view').style.display = 'none';
+                document.getElementById('blank-view').style.display = 'block';
+                return;
+            }
+            const m = String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0');
+            const s = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
+            document.getElementById('iqamah-timer').innerText = `${m}:${s}`;
+        }
+
+        let loginModal;
+        function showLoginModal() {
+            if(!loginModal) loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            document.getElementById('admin-pin').value = '';
+            loginModal.show();
+        }
+
+        function verifyLogin() {
+            if (document.getElementById('admin-pin').value === 'admintg123') {
+                loginModal.hide();
+                document.getElementById('public-view').style.display = 'none';
+                document.getElementById('admin-view').style.display = 'block';
+                document.body.style.overflow = 'auto'; 
+            } else { Swal.fire('Error', 'PIN Salah', 'error'); }
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-view').style.display = 'none';
+            document.getElementById('public-view').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+            renderSystem();
+        }
+
+        function switchAdminTab(tabId) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.admin-sidebar .nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+
+        function populateAdminForms() {
+            // Tab Umum
+            document.getElementById('inp-theme').value = db.config.theme || 'Deep Emerald Night';
+            document.getElementById('inp-runningtext').value = db.config.runningText || '';
+            document.getElementById('inp-speed').value = db.config.runningTextSpeed || '15';
+            document.getElementById('inp-showfinance').checked = (db.config.showFinance === 'true' || db.config.showFinance === true);
+            document.getElementById('inp-showqris').checked = (db.config.showQris === 'true' || db.config.showQris === true);
+            
+            // Tab Waktu (Hijri)
+            document.getElementById('inp-hijrimonth').value = db.config.hijriMonth || '';
+            document.getElementById('inp-hijriyear').value = db.config.hijriYear || '';
+            document.getElementById('inp-hijristart').value = db.config.hijriStartDate || '';
+
+            // Tab Waktu (Prayers)
+            const ptb = document.getElementById('prayers-tbody');
+            ptb.innerHTML = '';
+            const defaultNames = ['Subuh', 'Duha', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+            defaultNames.forEach(n => {
+                let p = db.prayers.find(x => x.name === n) || { name: n, time: '00:00', iqamah: (n==='Duha'?0:10) };
+                ptb.innerHTML += `
+                    <tr>
+                        <td class="fw-bold align-middle">${p.name} <input type="hidden" class="p-name" value="${p.name}"></td>
+                        <td><input type="time" class="form-control p-time" value="${p.time}"></td>
+                        <td><input type="number" class="form-control p-iqamah" value="${p.iqamah}" min="0" ${n==='Duha'?'readonly':''}></td>
+                    </tr>
+                `;
+            });
+
+            // Tab Slides
+            const stb = document.getElementById('slides-tbody');
+            stb.innerHTML = '';
+            db.announcements.forEach(a => {
+                let badge = (a.isActive==='true' || a.isActive===true) ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Mati</span>';
+                stb.innerHTML += `
+                    <tr>
+                        <td>${badge}</td>
+                        <td>${a.type==='image'?'<i class="bi bi-image"></i> Gambar':'<i class="bi bi-text-left"></i> Teks'}</td>
+                        <td>${a.title}</td><td>${a.duration}s</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editSlide('${a.id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="delSlide('${a.id}')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Tab Keuangan
+            document.getElementById('inp-saldoawal').value = db.finance.saldoAwal || 0;
+            document.getElementById('inp-pemasukan').value = db.finance.pemasukan || 0;
+            document.getElementById('inp-pengeluaran').value = db.finance.pengeluaran || 0;
+            document.getElementById('inp-saldoakhir').value = db.finance.saldoAkhir || 0;
+
+            // Tab Identity
+            document.getElementById('inp-bankname').value = db.identity.bankName || '';
+            document.getElementById('inp-accnumber').value = db.identity.accNumber || '';
+            document.getElementById('inp-accname').value = db.identity.accName || '';
+            document.getElementById('inp-qrisurl').value = db.identity.qrisUrl || '';
+        }
+
+        function saveConfig() {
+            const data = {
+                theme: document.getElementById('inp-theme').value,
+                runningText: document.getElementById('inp-runningtext').value,
+                runningTextSpeed: document.getElementById('inp-speed').value,
+                showFinance: document.getElementById('inp-showfinance').checked,
+                showQris: document.getElementById('inp-showqris').checked,
+                hijriMonth: document.getElementById('inp-hijrimonth').value,
+                hijriYear: document.getElementById('inp-hijriyear').value,
+                hijriStartDate: document.getElementById('inp-hijristart').value
+            };
+            postData('saveConfig', data);
+        }
+
+        function savePrayers() {
+            const rows = document.querySelectorAll('#prayers-tbody tr');
+            const data = [];
+            rows.forEach(r => {
+                data.push({
+                    name: r.querySelector('.p-name').value,
+                    time: r.querySelector('.p-time').value,
+                    iqamah: r.querySelector('.p-iqamah').value
+                });
+            });
+            postData('savePrayers', data);
+        }
+
+        function hitungSaldo() {
+            let awal = parseInt(document.getElementById('inp-saldoawal').value) || 0;
+            let masuk = parseInt(document.getElementById('inp-pemasukan').value) || 0;
+            let keluar = parseInt(document.getElementById('inp-pengeluaran').value) || 0;
+            document.getElementById('inp-saldoakhir').value = (awal + masuk) - keluar;
+        }
+
+        function saveFinance() {
+            hitungSaldo();
+            const data = {
+                saldoAwal: document.getElementById('inp-saldoawal').value,
+                pemasukan: document.getElementById('inp-pemasukan').value,
+                pengeluaran: document.getElementById('inp-pengeluaran').value,
+                saldoAkhir: document.getElementById('inp-saldoakhir').value
+            };
+            postData('saveFinance', data);
+        }
+
+        function saveIdentity() {
+            const data = {
+                bankName: document.getElementById('inp-bankname').value,
+                accNumber: document.getElementById('inp-accnumber').value,
+                accName: document.getElementById('inp-accname').value,
+                qrisUrl: document.getElementById('inp-qrisurl').value
+            };
+            postData('saveIdentity', data);
+        }
+
+        let slideMod;
+        function showSlideModal() {
+            if(!slideMod) slideMod = new bootstrap.Modal(document.getElementById('slideModal'));
+            document.getElementById('slide-id').value = '';
+            document.getElementById('slide-title-input').value = '';
+            document.getElementById('slide-content-input').value = '';
+            slideMod.show();
+        }
+
+        function editSlide(id) {
+            const item = db.announcements.find(a => a.id === id);
+            if(item) {
+                if(!slideMod) slideMod = new bootstrap.Modal(document.getElementById('slideModal'));
+                document.getElementById('slide-id').value = item.id;
+                document.getElementById('slide-type').value = item.type;
+                document.getElementById('slide-title-input').value = item.title;
+                document.getElementById('slide-content-input').value = item.content;
+                document.getElementById('slide-duration').value = item.duration;
+                document.getElementById('slide-active').value = item.isActive;
+                slideMod.show();
+            }
+        }
+
+        function saveSingleSlide() {
+            const id = document.getElementById('slide-id').value;
+            const data = {
+                id: id || 'ANN-' + new Date().getTime(),
+                type: document.getElementById('slide-type').value,
+                title: document.getElementById('slide-title-input').value,
+                content: document.getElementById('slide-content-input').value,
+                duration: document.getElementById('slide-duration').value,
+                isActive: document.getElementById('slide-active').value
+            };
+            
+            let arr = [...db.announcements];
+            if(id) {
+                const idx = arr.findIndex(a => a.id === id);
+                arr[idx] = data;
+            } else { arr.push(data); }
+
+            slideMod.hide();
+            postData('saveAnnouncements', arr);
+        }
+
+        function delSlide(id) {
+            Swal.fire({
+                title: 'Hapus slide?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    let arr = db.announcements.filter(a => a.id !== id);
+                    postData('saveAnnouncements', arr);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
